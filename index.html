@@ -481,6 +481,15 @@
 
     let analysisData = null;
 
+    /*
+      영상 프레임 기반 렌더링 상태
+    */
+    let videoFrameRequestId = null;
+
+    let animationFrameId = null;
+
+    let renderLoopToken = 0;
+
 
     /* ==================================================
        분석 팁
@@ -648,6 +657,9 @@
         }
 
 
+        stopVideoFrameLoop();
+
+
         analyzeButton.disabled =
           true;
 
@@ -798,6 +810,9 @@
     ================================================== */
 
     function renderResults(data) {
+
+      stopVideoFrameLoop();
+
 
       resultCard.hidden =
         false;
@@ -1037,19 +1052,57 @@
 
       analysisVideo.addEventListener(
         "loadedmetadata",
-        resizeCanvas
+        () => {
+
+          resizeCanvas();
+
+          startVideoFrameLoop();
+
+        }
       );
 
 
       analysisVideo.addEventListener(
-        "timeupdate",
-        drawCurrentFrame
+        "play",
+        () => {
+
+          startVideoFrameLoop();
+
+        }
+      );
+
+
+      analysisVideo.addEventListener(
+        "pause",
+        () => {
+
+          stopVideoFrameLoop();
+
+          drawCurrentFrame();
+
+        }
       );
 
 
       analysisVideo.addEventListener(
         "seeked",
-        drawCurrentFrame
+        () => {
+
+          drawCurrentFrame();
+
+        }
+      );
+
+
+      analysisVideo.addEventListener(
+        "ended",
+        () => {
+
+          stopVideoFrameLoop();
+
+          drawCurrentFrame();
+
+        }
       );
 
 
@@ -1066,9 +1119,186 @@
 
           drawCurrentFrame();
 
+          if (!analysisVideo.paused) {
+            startVideoFrameLoop();
+          }
+
         },
         300
       );
+
+    }
+
+
+    /* ==================================================
+       영상 프레임 기반 렌더링 루프
+    ================================================== */
+
+    function startVideoFrameLoop() {
+
+      stopVideoFrameLoop();
+
+
+      if (
+        !analysisData ||
+        !analysisVideo
+      ) {
+
+        return;
+
+      }
+
+
+      const token =
+        ++renderLoopToken;
+
+
+      /*
+        최신 브라우저에서는
+        영상의 실제 표시 프레임마다
+        callback을 호출한다.
+
+        기존 timeupdate보다 훨씬 촘촘하다.
+      */
+
+      if (
+        typeof analysisVideo.requestVideoFrameCallback ===
+        "function"
+      ) {
+
+        const render =
+          () => {
+
+            if (
+              token !== renderLoopToken
+            ) {
+
+              return;
+
+            }
+
+
+            drawCurrentFrame();
+
+
+            if (
+              !analysisVideo.paused &&
+              !analysisVideo.ended
+            ) {
+
+              videoFrameRequestId =
+                analysisVideo.requestVideoFrameCallback(
+                  render
+                );
+
+            }
+
+          };
+
+
+        videoFrameRequestId =
+          analysisVideo.requestVideoFrameCallback(
+            render
+          );
+
+
+        return;
+
+      }
+
+
+      /*
+        requestVideoFrameCallback을 지원하지 않는
+        브라우저용 fallback
+      */
+
+      const renderFallback =
+        () => {
+
+          if (
+            token !== renderLoopToken
+          ) {
+
+            return;
+
+          }
+
+
+          drawCurrentFrame();
+
+
+          if (
+            !analysisVideo.paused &&
+            !analysisVideo.ended
+          ) {
+
+            animationFrameId =
+              requestAnimationFrame(
+                renderFallback
+              );
+
+          }
+
+        };
+
+
+      animationFrameId =
+        requestAnimationFrame(
+          renderFallback
+        );
+
+    }
+
+
+    /* ==================================================
+       영상 프레임 기반 렌더링 중지
+    ================================================== */
+
+    function stopVideoFrameLoop() {
+
+      renderLoopToken++;
+
+
+      if (
+        videoFrameRequestId !== null &&
+        typeof analysisVideo.cancelVideoFrameCallback ===
+        "function"
+      ) {
+
+        try {
+
+          analysisVideo.cancelVideoFrameCallback(
+            videoFrameRequestId
+          );
+
+        } catch (error) {
+
+          console.warn(
+            "video frame callback 취소 실패:",
+            error
+          );
+
+        }
+
+      }
+
+
+      if (
+        animationFrameId !== null
+      ) {
+
+        cancelAnimationFrame(
+          animationFrameId
+        );
+
+      }
+
+
+      videoFrameRequestId =
+        null;
+
+      animationFrameId =
+        null;
 
     }
 
@@ -1162,6 +1392,253 @@
 
 
     /* ==================================================
+       두 관절점 사이 보간
+    ================================================== */
+
+    function interpolatePoint(
+      first,
+      second,
+      ratio
+    ) {
+
+      if (!first && !second) {
+        return null;
+      }
+
+
+      if (!first) {
+        return {
+          x: second[0],
+          y: second[1]
+        };
+      }
+
+
+      if (!second) {
+        return {
+          x: first[0],
+          y: first[1]
+        };
+      }
+
+
+      return {
+
+        x:
+          first[0] +
+          (
+            second[0] -
+            first[0]
+          ) *
+          ratio,
+
+        y:
+          first[1] +
+          (
+            second[1] -
+            first[1]
+          ) *
+          ratio
+
+      };
+
+    }
+
+
+    /* ==================================================
+       현재 영상 위치의 보간된 관절 데이터
+    ================================================== */
+
+    function getInterpolatedFrame(
+      currentTime
+    ) {
+
+      if (
+        !analysisData ||
+        !analysisData.frames ||
+        !analysisData.frames.length
+      ) {
+
+        return null;
+
+      }
+
+
+      const frames =
+        analysisData.frames;
+
+
+      const fps =
+        Number(
+          analysisData.fps
+        ) || 30;
+
+
+      /*
+        영상의 실제 현재 위치를
+        프레임 단위의 소수값으로 변환한다.
+
+        예:
+
+        10.35 프레임
+
+        → 10번 프레임과
+          11번 프레임 사이의
+          35% 위치
+      */
+
+      const exactFrame =
+        Math.max(
+          0,
+          Math.min(
+            frames.length - 1,
+            currentTime * fps
+          )
+        );
+
+
+      const firstIndex =
+        Math.floor(
+          exactFrame
+        );
+
+
+      const secondIndex =
+        Math.min(
+          frames.length - 1,
+          firstIndex + 1
+        );
+
+
+      const ratio =
+        exactFrame -
+        firstIndex;
+
+
+      const firstFrame =
+        frames[firstIndex];
+
+
+      const secondFrame =
+        frames[secondIndex];
+
+
+      if (!firstFrame) {
+        return null;
+      }
+
+
+      if (
+        firstIndex === secondIndex ||
+        !secondFrame
+      ) {
+
+        return firstFrame;
+
+      }
+
+
+      const firstPoints =
+        firstFrame.points || {};
+
+      const secondPoints =
+        secondFrame.points || {};
+
+
+      const pointNames =
+        new Set([
+          ...Object.keys(firstPoints),
+          ...Object.keys(secondPoints)
+        ]);
+
+
+      const interpolatedPoints =
+        {};
+
+
+      pointNames.forEach(
+        (name) => {
+
+          const first =
+            firstPoints[name];
+
+          const second =
+            secondPoints[name];
+
+
+          if (
+            !first &&
+            !second
+          ) {
+
+            interpolatedPoints[name] =
+              null;
+
+            return;
+
+          }
+
+
+          const result =
+            interpolatePoint(
+              first,
+              second,
+              ratio
+            );
+
+
+          if (!result) {
+
+            interpolatedPoints[name] =
+              null;
+
+            return;
+
+          }
+
+
+          interpolatedPoints[name] = [
+            result.x,
+            result.y
+          ];
+
+        }
+      );
+
+
+      /*
+        관절각은 화면 표시용으로
+        가장 가까운 프레임 값을 사용한다.
+
+        선분 좌표는 위에서 별도로
+        부드럽게 보간한다.
+      */
+
+      const angleFrame =
+        ratio < 0.5
+          ? firstFrame
+          : secondFrame;
+
+
+      return {
+
+        frame:
+          exactFrame,
+
+        points:
+          interpolatedPoints,
+
+        angles:
+          angleFrame
+            ? angleFrame.angles
+            : firstFrame.angles
+
+      };
+
+    }
+
+
+    /* ==================================================
        현재 영상 프레임 그리기
     ================================================== */
 
@@ -1223,40 +1700,10 @@
       );
 
 
-      const frames =
-        analysisData.frames || [];
-
-
-      if (!frames.length) {
-        return;
-      }
-
-
-      const fps =
-        Number(
-          analysisData.fps
-        ) || 30;
-
-
-      let frameIndex =
-        Math.round(
-          analysisVideo.currentTime *
-          fps
-        );
-
-
-      frameIndex =
-        Math.max(
-          0,
-          Math.min(
-            frames.length - 1,
-            frameIndex
-          )
-        );
-
-
       const frame =
-        frames[frameIndex];
+        getInterpolatedFrame(
+          analysisVideo.currentTime
+        );
 
 
       if (
@@ -1624,10 +2071,7 @@
 
 
       /*
-        기존에는 entries[0]만 사용해서
-        한 개의 관절각만 표시했다.
-
-        이제 현재 프레임에서 측정 가능한
+        현재 프레임에서 측정 가능한
         모든 관절각을 표시한다.
       */
 
@@ -1773,4 +2217,4 @@
   </script>
 
 </body>
-  </html>
+</html>
