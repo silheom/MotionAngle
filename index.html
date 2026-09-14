@@ -2,11 +2,14 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
+
   <title>MotionAngle</title>
+
   <link rel="stylesheet" href="/style.css">
 
   <style>
@@ -121,12 +124,34 @@
     .current-angle-title {
       font-size: 14px;
       opacity: 0.7;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .current-angle-value {
-      font-size: 32px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .current-angle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #303845;
+      font-size: 13px;
+    }
+
+    .current-angle-item-name {
+      opacity: 0.85;
+    }
+
+    .current-angle-item-value {
+      font-size: 17px;
       font-weight: 800;
+      white-space: nowrap;
     }
 
     .notice {
@@ -155,6 +180,7 @@
       0% {
         left: -35%;
       }
+
       100% {
         left: 100%;
       }
@@ -169,11 +195,20 @@
       .jump-button {
         font-size: 10px;
       }
+
+      .current-angle-value {
+        grid-template-columns: 1fr;
+      }
+
+      .current-angle-item-value {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 
 <body>
+
   <main class="app">
 
     <header class="hero">
@@ -181,17 +216,24 @@
       <p>AI 기반 운동 동작 및 관절 가동범위 분석</p>
     </header>
 
+
     <!-- 영상 선택 -->
     <section class="card">
+
       <h2>1. 운동 영상 선택</h2>
 
       <label class="upload">
+
         <input
           id="videoInput"
           type="file"
           accept="video/*"
         >
-        <span id="fileName">영상 선택</span>
+
+        <span id="fileName">
+          영상 선택
+        </span>
+
       </label>
 
       <video
@@ -200,23 +242,32 @@
         playsinline
         hidden
       ></video>
+
     </section>
+
 
     <!-- 분석 간격 -->
     <section class="card">
+
       <h2>2. 분석 간격 X</h2>
 
       <p class="help">
-        낮은 X는 더 세밀한 분석, 높은 X는 더 빠른 분석에 유리합니다.
+        낮은 X는 더 세밀한 분석,
+        높은 X는 더 빠른 분석에 유리합니다.
       </p>
 
-      <div class="x-grid" id="xGrid"></div>
+      <div
+        class="x-grid"
+        id="xGrid"
+      ></div>
 
       <div class="selected-info">
         현재 선택:
         <strong id="xValue">5</strong>
       </div>
+
     </section>
+
 
     <!-- 분석 시작 -->
     <button
@@ -227,19 +278,23 @@
       분석 시작
     </button>
 
+
     <!-- 분석 상태 -->
     <section
       id="progressCard"
       class="card"
       hidden
     >
+
       <h2>분석 상태</h2>
 
       <div class="progress-track">
+
         <div
           id="progressBar"
           class="progress-indeterminate"
         ></div>
+
       </div>
 
       <p id="progressText">
@@ -250,7 +305,9 @@
         id="tip"
         class="tip"
       ></div>
+
     </section>
+
 
     <!-- 분석 결과 -->
     <section
@@ -258,9 +315,11 @@
       class="card"
       hidden
     >
+
       <h2>분석 결과</h2>
 
       <p id="resultMessage"></p>
+
 
       <!-- 분석 영상 -->
       <div
@@ -268,6 +327,7 @@
         class="analysis-video-wrap"
         hidden
       >
+
         <video
           id="analysisVideo"
           controls
@@ -275,7 +335,9 @@
         ></video>
 
         <canvas id="overlayCanvas"></canvas>
+
       </div>
+
 
       <!-- 현재 각도 -->
       <div
@@ -283,6 +345,7 @@
         class="current-angle"
         hidden
       >
+
         <div class="current-angle-title">
           현재 영상 위치의 관절각
         </div>
@@ -293,7 +356,9 @@
         >
           -
         </div>
+
       </div>
+
 
       <!-- 분석 요약 -->
       <div
@@ -301,283 +366,501 @@
         class="result-summary"
       ></div>
 
+
       <h3 style="margin-top: 24px;">
         관절별 최대 / 최소 / ROM
       </h3>
+
 
       <div
         id="statsList"
         class="stats-list"
       ></div>
 
+
       <div class="notice">
+
         <strong>주의</strong><br>
-        본 분석은 영상의 2D 포즈 데이터를 기반으로 한 참고용 분석입니다.
-        카메라 각도, 가림, 조명, 화질, 빠른 움직임 등에 따라 오차가 발생할 수
-        있으며 의료 진단이나 공식적인 운동 판정 용도로 사용할 수 없습니다.
+
+        본 분석은 영상의 2D 포즈 데이터를 기반으로 한
+        참고용 분석입니다.
+
+        카메라 각도, 가림, 조명, 화질,
+        빠른 움직임 등에 따라 오차가 발생할 수 있으며
+        의료 진단이나 공식적인 운동 판정 용도로 사용할 수 없습니다.
+
       </div>
+
     </section>
 
   </main>
 
+
   <script>
-    const videoInput = document.getElementById("videoInput");
-    const fileName = document.getElementById("fileName");
-    const videoPreview = document.getElementById("videoPreview");
 
-    const xGrid = document.getElementById("xGrid");
-    const xValueElement = document.getElementById("xValue");
+    /* ==================================================
+       기본 요소
+    ================================================== */
 
-    const analyzeButton = document.getElementById("analyzeButton");
+    const videoInput =
+      document.getElementById("videoInput");
 
-    const progressCard = document.getElementById("progressCard");
-    const progressText = document.getElementById("progressText");
-    const tip = document.getElementById("tip");
+    const fileName =
+      document.getElementById("fileName");
 
-    const resultCard = document.getElementById("resultCard");
-    const resultMessage = document.getElementById("resultMessage");
+    const videoPreview =
+      document.getElementById("videoPreview");
+
+    const xGrid =
+      document.getElementById("xGrid");
+
+    const xValueElement =
+      document.getElementById("xValue");
+
+    const analyzeButton =
+      document.getElementById("analyzeButton");
+
+    const progressCard =
+      document.getElementById("progressCard");
+
+    const progressText =
+      document.getElementById("progressText");
+
+    const tip =
+      document.getElementById("tip");
+
+    const resultCard =
+      document.getElementById("resultCard");
+
+    const resultMessage =
+      document.getElementById("resultMessage");
 
     const analysisVideoContainer =
-      document.getElementById("analysisVideoContainer");
+      document.getElementById(
+        "analysisVideoContainer"
+      );
 
     const analysisVideo =
-      document.getElementById("analysisVideo");
+      document.getElementById(
+        "analysisVideo"
+      );
 
     const overlayCanvas =
-      document.getElementById("overlayCanvas");
+      document.getElementById(
+        "overlayCanvas"
+      );
 
     const currentAngle =
-      document.getElementById("currentAngle");
+      document.getElementById(
+        "currentAngle"
+      );
 
     const currentAngleValue =
-      document.getElementById("currentAngleValue");
+      document.getElementById(
+        "currentAngleValue"
+      );
 
     const resultSummary =
-      document.getElementById("resultSummary");
+      document.getElementById(
+        "resultSummary"
+      );
 
     const statsList =
-      document.getElementById("statsList");
+      document.getElementById(
+        "statsList"
+      );
 
+
+    /* ==================================================
+       상태
+    ================================================== */
 
     let selectedX = 5;
+
     let selectedFile = null;
+
     let analysisData = null;
 
+
+    /* ==================================================
+       분석 팁
+    ================================================== */
+
     const tips = [
+
       "관절이 화면 밖으로 나가면 추적 정확도가 떨어질 수 있습니다.",
+
       "가능하면 운동하는 사람이 화면 안에 전부 보이도록 촬영하세요.",
+
       "빠른 움직임에서는 모션 블러가 분석 정확도에 영향을 줄 수 있습니다.",
+
       "X=1은 모든 프레임을 분석하여 가장 세밀한 분석을 시도합니다.",
+
       "X가 높아질수록 분석 속도는 빨라지지만 중간 프레임은 보간됩니다.",
+
       "카메라가 흔들리지 않는 영상이 포즈 추적에 유리합니다.",
+
       "측면 촬영은 무릎과 팔꿈치 각도 분석에 유리할 수 있습니다.",
+
       "2D 영상 분석이므로 실제 3차원 관절각과 차이가 날 수 있습니다."
+
     ];
 
 
-    /* --------------------------------
-       X 선택 버튼
-    -------------------------------- */
+    /* ==================================================
+       X 선택
+    ================================================== */
 
-    for (let i = 1; i <= 10; i++) {
-      const button = document.createElement("button");
+    for (
+      let i = 1;
+      i <= 10;
+      i++
+    ) {
+
+      const button =
+        document.createElement("button");
 
       button.type = "button";
-      button.textContent = `X = ${i}`;
+
+      button.textContent =
+        `X = ${i}`;
 
       if (i === selectedX) {
-        button.classList.add("selected");
+
+        button.classList.add(
+          "selected"
+        );
+
       }
 
-      button.addEventListener("click", () => {
-        selectedX = i;
-        xValueElement.textContent = String(i);
 
-        document
-          .querySelectorAll("#xGrid button")
-          .forEach((item) => {
-            item.classList.remove("selected");
-          });
+      button.addEventListener(
+        "click",
+        () => {
 
-        button.classList.add("selected");
-      });
+          selectedX = i;
+
+          xValueElement.textContent =
+            String(i);
+
+          document
+            .querySelectorAll(
+              "#xGrid button"
+            )
+            .forEach(
+              (item) => {
+
+                item.classList.remove(
+                  "selected"
+                );
+
+              }
+            );
+
+          button.classList.add(
+            "selected"
+          );
+
+        }
+      );
+
 
       xGrid.appendChild(button);
+
     }
 
 
-    /* --------------------------------
+    /* ==================================================
        영상 선택
-    -------------------------------- */
+    ================================================== */
 
-    videoInput.addEventListener("change", () => {
-      const file = videoInput.files[0];
+    videoInput.addEventListener(
+      "change",
+      () => {
 
-      if (!file) {
-        selectedFile = null;
-        fileName.textContent = "영상 선택";
-        analyzeButton.disabled = true;
-        videoPreview.hidden = true;
-        return;
+        const file =
+          videoInput.files[0];
+
+        if (!file) {
+
+          selectedFile = null;
+
+          fileName.textContent =
+            "영상 선택";
+
+          analyzeButton.disabled =
+            true;
+
+          videoPreview.hidden =
+            true;
+
+          return;
+
+        }
+
+
+        selectedFile = file;
+
+        fileName.textContent =
+          file.name;
+
+
+        const objectUrl =
+          URL.createObjectURL(file);
+
+        videoPreview.src =
+          objectUrl;
+
+        videoPreview.hidden =
+          false;
+
+        analyzeButton.disabled =
+          false;
+
+        resultCard.hidden =
+          true;
+
+        progressCard.hidden =
+          true;
+
+        videoPreview.load();
+
       }
-
-      selectedFile = file;
-
-      fileName.textContent = file.name;
-
-      const objectUrl = URL.createObjectURL(file);
-
-      videoPreview.src = objectUrl;
-      videoPreview.hidden = false;
-
-      analyzeButton.disabled = false;
-
-      resultCard.hidden = true;
-      progressCard.hidden = true;
-
-      videoPreview.load();
-    });
+    );
 
 
-    /* --------------------------------
-       분석 버튼
-    -------------------------------- */
+    /* ==================================================
+       분석
+    ================================================== */
 
-    analyzeButton.addEventListener("click", async () => {
+    analyzeButton.addEventListener(
+      "click",
+      async () => {
 
-      if (!selectedFile) {
-        alert("먼저 영상을 선택해주세요.");
-        return;
-      }
+        if (!selectedFile) {
 
-      analyzeButton.disabled = true;
+          alert(
+            "먼저 영상을 선택해주세요."
+          );
 
-      progressCard.hidden = false;
-      resultCard.hidden = true;
+          return;
 
-      progressText.textContent =
-        "영상을 서버로 전송하고 AI 포즈 분석을 준비하고 있습니다.";
-
-      let tipIndex = 0;
-      tip.textContent = tips[tipIndex];
-
-      const tipTimer = setInterval(() => {
-        tipIndex = (tipIndex + 1) % tips.length;
-        tip.textContent = tips[tipIndex];
-      }, 2500);
+        }
 
 
-      try {
+        analyzeButton.disabled =
+          true;
 
-        const formData = new FormData();
+        progressCard.hidden =
+          false;
 
-        formData.append("video", selectedFile);
-        formData.append("x", String(selectedX));
+        resultCard.hidden =
+          true;
 
 
         progressText.textContent =
-          `AI 분석 중입니다. X=${selectedX} 설정으로 프레임을 분석합니다.`;
+          "영상을 서버로 전송하고 AI 포즈 분석을 준비하고 있습니다.";
 
 
-        const response = await fetch("/analyze", {
-          method: "POST",
-          body: formData
-        });
+        let tipIndex = 0;
+
+        tip.textContent =
+          tips[tipIndex];
 
 
-        let data;
+        const tipTimer =
+          setInterval(
+            () => {
+
+              tipIndex =
+                (tipIndex + 1) %
+                tips.length;
+
+              tip.textContent =
+                tips[tipIndex];
+
+            },
+            2500
+          );
+
 
         try {
-          data = await response.json();
-        } catch (jsonError) {
-          throw new Error(
-            "서버가 정상적인 분석 결과를 반환하지 않았습니다."
+
+          const formData =
+            new FormData();
+
+
+          formData.append(
+            "video",
+            selectedFile
           );
+
+
+          formData.append(
+            "x",
+            String(selectedX)
+          );
+
+
+          progressText.textContent =
+            `AI 분석 중입니다. X=${selectedX} 설정으로 프레임을 분석합니다.`;
+
+
+          const response =
+            await fetch(
+              "/analyze",
+              {
+                method: "POST",
+                body: formData
+              }
+            );
+
+
+          let data;
+
+
+          try {
+
+            data =
+              await response.json();
+
+          } catch (jsonError) {
+
+            throw new Error(
+              "서버가 정상적인 분석 결과를 반환하지 않았습니다."
+            );
+
+          }
+
+
+          if (
+            !response.ok ||
+            !data.ok
+          ) {
+
+            throw new Error(
+              data.detail ||
+              data.error ||
+              "영상 분석에 실패했습니다."
+            );
+
+          }
+
+
+          analysisData =
+            data;
+
+
+          progressText.textContent =
+            "AI 영상 분석이 완료되었습니다.";
+
+
+          renderResults(data);
+
+
+        } catch (error) {
+
+          console.error(error);
+
+
+          progressText.textContent =
+            "분석 중 오류가 발생했습니다.";
+
+
+          resultCard.hidden =
+            false;
+
+
+          resultMessage.innerHTML =
+            `<span class="status-error">분석 실패</span><br><br>` +
+            escapeHtml(
+              error.message
+            );
+
+
+        } finally {
+
+          clearInterval(
+            tipTimer
+          );
+
+          analyzeButton.disabled =
+            false;
+
         }
 
-
-        if (!response.ok || !data.ok) {
-          throw new Error(
-            data.detail ||
-            data.error ||
-            "영상 분석에 실패했습니다."
-          );
-        }
-
-
-        analysisData = data;
-
-        progressText.textContent =
-          "AI 영상 분석이 완료되었습니다.";
-
-        renderResults(data);
-
-      } catch (error) {
-
-        console.error(error);
-
-        progressText.textContent =
-          "분석 중 오류가 발생했습니다.";
-
-        resultCard.hidden = false;
-
-        resultMessage.innerHTML =
-          `<span class="status-error">분석 실패</span><br><br>` +
-          escapeHtml(error.message);
-
-      } finally {
-
-        clearInterval(tipTimer);
-
-        analyzeButton.disabled = false;
       }
-    });
+    );
 
 
-    /* --------------------------------
+    /* ==================================================
        결과 표시
-    -------------------------------- */
+    ================================================== */
 
     function renderResults(data) {
 
-      resultCard.hidden = false;
+      resultCard.hidden =
+        false;
+
 
       resultMessage.innerHTML =
         `<span class="status-good">AI 영상 분석 완료</span>`;
 
-      analysisVideoContainer.hidden = false;
-      currentAngle.hidden = false;
+
+      analysisVideoContainer.hidden =
+        false;
+
+
+      currentAngle.hidden =
+        false;
 
 
       /*
-        업로드한 원본 영상은 브라우저에서 이미 가지고 있으므로
-        같은 파일을 분석 결과 영상으로 사용한다.
+        원본 영상을 브라우저에서 재생하고
+        AI 분석 데이터는 canvas 위에 표시한다.
       */
 
-      const resultUrl = URL.createObjectURL(selectedFile);
+      const resultUrl =
+        URL.createObjectURL(
+          selectedFile
+        );
 
-      analysisVideo.src = resultUrl;
+
+      analysisVideo.src =
+        resultUrl;
+
       analysisVideo.load();
 
 
-      /* 요약 */
+      /* --------------------------------
+         요약
+      -------------------------------- */
 
-      resultSummary.innerHTML = "";
+      resultSummary.innerHTML =
+        "";
+
 
       addSummaryItem(
         "분석 간격",
         `X = ${data.x}`
       );
 
+
       addSummaryItem(
         "영상 길이",
-        `${Number(data.duration || 0).toFixed(2)}초`
+        `${Number(
+          data.duration || 0
+        ).toFixed(2)}초`
       );
+
 
       addSummaryItem(
         "FPS",
-        `${Number(data.fps || 0).toFixed(1)}`
+        `${Number(
+          data.fps || 0
+        ).toFixed(1)}`
       );
+
 
       addSummaryItem(
         "분석 프레임",
@@ -585,43 +868,81 @@
       );
 
 
-      /* 관절 통계 */
+      /* --------------------------------
+         관절 통계
+      -------------------------------- */
 
-      statsList.innerHTML = "";
+      statsList.innerHTML =
+        "";
 
-      const header = document.createElement("div");
 
-      header.className = "stat-row header";
+      const header =
+        document.createElement(
+          "div"
+        );
+
+
+      header.className =
+        "stat-row header";
+
 
       header.innerHTML = `
+
         <div>관절</div>
+
         <div>최대</div>
+
         <div>최소</div>
+
         <div>ROM</div>
+
       `;
 
-      statsList.appendChild(header);
+
+      statsList.appendChild(
+        header
+      );
 
 
-      const statistics = data.statistics || {};
+      const statistics =
+        data.statistics || {};
 
-      Object.entries(statistics).forEach(
+
+      Object.entries(
+        statistics
+      ).forEach(
         ([jointName, stat]) => {
 
-          if (!stat || stat.max === null) {
+          if (
+            !stat ||
+            stat.max === null
+          ) {
             return;
           }
 
-          const row = document.createElement("div");
 
-          row.className = "stat-row";
+          const row =
+            document.createElement(
+              "div"
+            );
+
+
+          row.className =
+            "stat-row";
+
 
           row.innerHTML = `
+
             <div class="joint-name">
-              ${jointLabel(jointName)}
+              ${escapeHtml(
+                jointLabel(
+                  jointName
+                )
+              )}
             </div>
 
             <div>
+
               <button
                 class="jump-button"
                 type="button"
@@ -629,9 +950,11 @@
               >
                 ${stat.max}°
               </button>
+
             </div>
 
             <div>
+
               <button
                 class="jump-button"
                 type="button"
@@ -639,77 +962,138 @@
               >
                 ${stat.min}°
               </button>
+
             </div>
 
             <div>
               ${stat.rom}°
             </div>
+
           `;
 
-          statsList.appendChild(row);
+
+          statsList.appendChild(
+            row
+          );
+
         }
       );
 
 
+      /* --------------------------------
+         최대 / 최소 이동 버튼
+      -------------------------------- */
+
       document
-        .querySelectorAll(".jump-button")
-        .forEach((button) => {
+        .querySelectorAll(
+          ".jump-button"
+        )
+        .forEach(
+          (button) => {
 
-          button.addEventListener("click", () => {
+            button.addEventListener(
+              "click",
+              () => {
 
-            const time =
-              Number(button.dataset.time);
+                const time =
+                  Number(
+                    button.dataset.time
+                  );
 
-            if (!Number.isFinite(time)) {
-              return;
-            }
 
-            analysisVideo.currentTime = time;
+                if (
+                  !Number.isFinite(
+                    time
+                  )
+                ) {
+                  return;
+                }
 
-            analysisVideo.scrollIntoView({
-              behavior: "smooth",
-              block: "center"
-            });
 
-            drawCurrentFrame();
-          });
-        });
+                analysisVideo.currentTime =
+                  time;
 
+
+                analysisVideo.scrollIntoView(
+                  {
+                    behavior: "smooth",
+                    block: "center"
+                  }
+                );
+
+
+                drawCurrentFrame();
+
+              }
+            );
+
+          }
+        );
+
+
+      /* --------------------------------
+         영상 이벤트
+      -------------------------------- */
 
       analysisVideo.addEventListener(
         "loadedmetadata",
         resizeCanvas
       );
 
+
       analysisVideo.addEventListener(
         "timeupdate",
         drawCurrentFrame
       );
+
 
       analysisVideo.addEventListener(
         "seeked",
         drawCurrentFrame
       );
 
+
       window.addEventListener(
         "resize",
         resizeCanvas
       );
 
-      setTimeout(() => {
-        resizeCanvas();
-        drawCurrentFrame();
-      }, 300);
+
+      setTimeout(
+        () => {
+
+          resizeCanvas();
+
+          drawCurrentFrame();
+
+        },
+        300
+      );
+
     }
 
 
-    function addSummaryItem(label, value) {
+    /* ==================================================
+       요약 카드
+    ================================================== */
 
-      const item = document.createElement("div");
+    function addSummaryItem(
+      label,
+      value
+    ) {
 
-      item.className = "summary-item";
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "summary-item";
+
 
       item.innerHTML = `
+
         <span class="summary-label">
           ${escapeHtml(label)}
         </span>
@@ -717,15 +1101,20 @@
         <span class="summary-value">
           ${escapeHtml(value)}
         </span>
+
       `;
 
-      resultSummary.appendChild(item);
+
+      resultSummary.appendChild(
+        item
+      );
+
     }
 
 
-    /* --------------------------------
-       현재 프레임의 관절선 그리기
-    -------------------------------- */
+    /* ==================================================
+       Canvas 크기
+    ================================================== */
 
     function resizeCanvas() {
 
@@ -733,30 +1122,48 @@
         !analysisVideo.videoWidth ||
         !analysisVideo.videoHeight
       ) {
+
         return;
+
       }
+
 
       const rect =
         analysisVideo.getBoundingClientRect();
 
+
       const dpr =
         window.devicePixelRatio || 1;
 
+
       overlayCanvas.width =
-        Math.round(rect.width * dpr);
+        Math.round(
+          rect.width * dpr
+        );
+
 
       overlayCanvas.height =
-        Math.round(rect.height * dpr);
+        Math.round(
+          rect.height * dpr
+        );
+
 
       overlayCanvas.style.width =
         `${rect.width}px`;
 
+
       overlayCanvas.style.height =
         `${rect.height}px`;
 
+
       drawCurrentFrame();
+
     }
 
+
+    /* ==================================================
+       현재 영상 프레임 그리기
+    ================================================== */
 
     function drawCurrentFrame() {
 
@@ -764,15 +1171,22 @@
         return;
       }
 
+
       if (
         !analysisVideo.videoWidth ||
         !analysisVideo.videoHeight
       ) {
+
         return;
+
       }
 
+
       const ctx =
-        overlayCanvas.getContext("2d");
+        overlayCanvas.getContext(
+          "2d"
+        );
+
 
       if (!ctx) {
         return;
@@ -782,8 +1196,10 @@
       const dpr =
         window.devicePixelRatio || 1;
 
+
       const width =
         overlayCanvas.width / dpr;
+
 
       const height =
         overlayCanvas.height / dpr;
@@ -798,6 +1214,7 @@
         0
       );
 
+
       ctx.clearRect(
         0,
         0,
@@ -809,18 +1226,24 @@
       const frames =
         analysisData.frames || [];
 
+
       if (!frames.length) {
         return;
       }
 
 
       const fps =
-        Number(analysisData.fps) || 30;
+        Number(
+          analysisData.fps
+        ) || 30;
+
 
       let frameIndex =
         Math.round(
-          analysisVideo.currentTime * fps
+          analysisVideo.currentTime *
+          fps
         );
+
 
       frameIndex =
         Math.max(
@@ -835,8 +1258,18 @@
       const frame =
         frames[frameIndex];
 
-      if (!frame || !frame.points) {
+
+      if (
+        !frame ||
+        !frame.points
+      ) {
+
+        updateCurrentAngle(
+          frame
+        );
+
         return;
+
       }
 
 
@@ -844,28 +1277,35 @@
         frame.points;
 
 
-      /*
-        화면 크기에 맞춰 정규화 좌표를 변환한다.
-      */
+      /* --------------------------------
+         좌표 변환
+      -------------------------------- */
 
       function point(name) {
 
-        const p = points[name];
+        const p =
+          points[name];
+
 
         if (!p) {
           return null;
         }
 
+
         return {
+
           x: p[0] * width,
+
           y: p[1] * height
+
         };
+
       }
 
 
-      /*
-        신체 부위별 색상
-      */
+      /* --------------------------------
+         신체 부위별 색상
+      -------------------------------- */
 
       const segmentStyles = {
 
@@ -898,56 +1338,155 @@
           color: "#ffffff",
           width: 3
         }
+
       };
 
 
+      /* --------------------------------
+         신체 연결선
+      -------------------------------- */
+
       const segments = [
 
-        ["left_shoulder", "right_shoulder", "torso"],
+        [
+          "left_shoulder",
+          "right_shoulder",
+          "torso"
+        ],
 
-        ["left_shoulder", "left_hip", "torso"],
-        ["right_shoulder", "right_hip", "torso"],
-        ["left_hip", "right_hip", "torso"],
+        [
+          "left_shoulder",
+          "left_hip",
+          "torso"
+        ],
 
-        ["left_shoulder", "left_elbow", "leftArm"],
-        ["left_elbow", "left_wrist", "leftArm"],
-        ["left_wrist", "left_index", "leftArm"],
+        [
+          "right_shoulder",
+          "right_hip",
+          "torso"
+        ],
 
-        ["right_shoulder", "right_elbow", "rightArm"],
-        ["right_elbow", "right_wrist", "rightArm"],
-        ["right_wrist", "right_index", "rightArm"],
+        [
+          "left_hip",
+          "right_hip",
+          "torso"
+        ],
 
-        ["left_hip", "left_knee", "leftLeg"],
-        ["left_knee", "left_ankle", "leftLeg"],
-        ["left_ankle", "left_foot", "leftLeg"],
+        [
+          "left_shoulder",
+          "left_elbow",
+          "leftArm"
+        ],
 
-        ["right_hip", "right_knee", "rightLeg"],
-        ["right_knee", "right_ankle", "rightLeg"],
-        ["right_ankle", "right_foot", "rightLeg"]
+        [
+          "left_elbow",
+          "left_wrist",
+          "leftArm"
+        ],
+
+        [
+          "left_wrist",
+          "left_index",
+          "leftArm"
+        ],
+
+        [
+          "right_shoulder",
+          "right_elbow",
+          "rightArm"
+        ],
+
+        [
+          "right_elbow",
+          "right_wrist",
+          "rightArm"
+        ],
+
+        [
+          "right_wrist",
+          "right_index",
+          "rightArm"
+        ],
+
+        [
+          "left_hip",
+          "left_knee",
+          "leftLeg"
+        ],
+
+        [
+          "left_knee",
+          "left_ankle",
+          "leftLeg"
+        ],
+
+        [
+          "left_ankle",
+          "left_foot",
+          "leftLeg"
+        ],
+
+        [
+          "right_hip",
+          "right_knee",
+          "rightLeg"
+        ],
+
+        [
+          "right_knee",
+          "right_ankle",
+          "rightLeg"
+        ],
+
+        [
+          "right_ankle",
+          "right_foot",
+          "rightLeg"
+        ]
+
       ];
 
 
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      ctx.lineCap =
+        "round";
+
+      ctx.lineJoin =
+        "round";
 
 
       segments.forEach(
         ([aName, bName, styleName]) => {
 
-          const a = point(aName);
-          const b = point(bName);
+          const a =
+            point(aName);
+
+          const b =
+            point(bName);
+
 
           if (!a || !b) {
             return;
           }
 
+
           const style =
-            segmentStyles[styleName];
+            segmentStyles[
+              styleName
+            ];
+
 
           ctx.beginPath();
 
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
+          ctx.moveTo(
+            a.x,
+            a.y
+          );
+
+          ctx.lineTo(
+            b.x,
+            b.y
+          );
+
 
           ctx.lineWidth =
             style.width;
@@ -956,24 +1495,31 @@
             style.color;
 
           ctx.stroke();
+
         }
       );
 
 
-      /*
-        관절점
-      */
+      /* --------------------------------
+         관절점
+      -------------------------------- */
 
-      Object.entries(points).forEach(
-        ([name, value]) => {
+      Object.entries(
+        points
+      ).forEach(
+        ([name]) => {
 
-          const p = point(name);
+          const p =
+            point(name);
+
 
           if (!p) {
             return;
           }
 
+
           ctx.beginPath();
+
 
           ctx.arc(
             p.x,
@@ -983,10 +1529,16 @@
             Math.PI * 2
           );
 
-          ctx.fillStyle = "#ffffff";
+
+          ctx.fillStyle =
+            "#ffffff";
+
+
           ctx.fill();
 
+
           ctx.beginPath();
+
 
           ctx.arc(
             p.x,
@@ -996,103 +1548,226 @@
             Math.PI * 2
           );
 
-          ctx.fillStyle = "#111111";
+
+          ctx.fillStyle =
+            "#111111";
+
+
           ctx.fill();
+
         }
       );
 
 
-      /*
-        현재 각도 표시
-      */
+      /* --------------------------------
+         현재 프레임의 모든 관절각
+      -------------------------------- */
 
-      updateCurrentAngle(frame);
+      updateCurrentAngle(
+        frame
+      );
+
     }
 
 
-    function updateCurrentAngle(frame) {
+    /* ==================================================
+       현재 프레임의 관절각 표시
+    ================================================== */
 
-      if (!frame || !frame.angles) {
-        currentAngleValue.textContent = "-";
+    function updateCurrentAngle(
+      frame
+    ) {
+
+      if (
+        !frame ||
+        !frame.angles
+      ) {
+
+        currentAngleValue.textContent =
+          "-";
+
         return;
+
       }
 
 
       const entries =
-        Object.entries(frame.angles)
-          .filter(
-            ([, value]) =>
+        Object.entries(
+          frame.angles
+        )
+        .filter(
+          ([, value]) => {
+
+            const number =
+              Number(value);
+
+            return (
               value !== null &&
-              value !== undefined
-          );
+              value !== undefined &&
+              Number.isFinite(
+                number
+              )
+            );
+
+          }
+        );
 
 
       if (!entries.length) {
+
         currentAngleValue.textContent =
           "측정 가능한 관절 없음";
+
         return;
+
       }
 
 
-      const first =
-        entries[0];
+      /*
+        기존에는 entries[0]만 사용해서
+        한 개의 관절각만 표시했다.
+
+        이제 현재 프레임에서 측정 가능한
+        모든 관절각을 표시한다.
+      */
+
+      currentAngleValue.innerHTML =
+        entries
+          .map(
+            ([name, value]) => {
+
+              const label =
+                escapeHtml(
+                  jointLabel(name)
+                );
 
 
-      const name =
-        jointLabel(first[0]);
-
-      const value =
-        Number(first[1]).toFixed(1);
+              const angle =
+                Number(value)
+                  .toFixed(1);
 
 
-      currentAngleValue.textContent =
-        `${name}: ${value}°`;
+              return `
+
+                <div
+                  class="current-angle-item"
+                >
+
+                  <span
+                    class="current-angle-item-name"
+                  >
+                    ${label}
+                  </span>
+
+                  <span
+                    class="current-angle-item-value"
+                  >
+                    ${angle}°
+                  </span>
+
+                </div>
+
+              `;
+
+            }
+          )
+          .join("");
+
     }
 
 
-    /* --------------------------------
+    /* ==================================================
        관절 이름
-    -------------------------------- */
+    ================================================== */
 
-    function jointLabel(name) {
+    function jointLabel(
+      name
+    ) {
 
       const labels = {
 
-        left_shoulder: "왼쪽 어깨",
-        right_shoulder: "오른쪽 어깨",
+        left_shoulder:
+          "왼쪽 어깨",
 
-        left_elbow: "왼쪽 팔꿈치",
-        right_elbow: "오른쪽 팔꿈치",
+        right_shoulder:
+          "오른쪽 어깨",
 
-        left_wrist: "왼쪽 손목",
-        right_wrist: "오른쪽 손목",
+        left_elbow:
+          "왼쪽 팔꿈치",
 
-        left_hip: "왼쪽 고관절",
-        right_hip: "오른쪽 고관절",
+        right_elbow:
+          "오른쪽 팔꿈치",
 
-        left_knee: "왼쪽 무릎",
-        right_knee: "오른쪽 무릎",
+        left_wrist:
+          "왼쪽 손목",
 
-        left_ankle: "왼쪽 발목",
-        right_ankle: "오른쪽 발목"
+        right_wrist:
+          "오른쪽 손목",
+
+        left_hip:
+          "왼쪽 고관절",
+
+        right_hip:
+          "오른쪽 고관절",
+
+        left_knee:
+          "왼쪽 무릎",
+
+        right_knee:
+          "오른쪽 무릎",
+
+        left_ankle:
+          "왼쪽 발목",
+
+        right_ankle:
+          "오른쪽 발목"
+
       };
 
-      return labels[name] || name;
+
+      return (
+        labels[name] ||
+        name
+      );
+
     }
 
 
-    /* --------------------------------
+    /* ==================================================
        HTML 안전 처리
-    -------------------------------- */
+    ================================================== */
 
-    function escapeHtml(value) {
+    function escapeHtml(
+      value
+    ) {
 
       return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+
+        .replaceAll(
+          "&",
+          "&amp;"
+        )
+
+        .replaceAll(
+          "<",
+          "&lt;"
+        )
+
+        .replaceAll(
+          ">",
+          "&gt;"
+        )
+
+        .replaceAll(
+          '"',
+          "&quot;"
+        )
+
+        .replaceAll(
+          "'",
+          "&#039;"
+        );
+
     }
 
   </script>
