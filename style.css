@@ -1,0 +1,153 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f4f6f8;
+  background: #0f1115;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0f1115;
+}
+
+.app {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+.hero {
+  padding: 20px 4px 12px;
+}
+
+.logo {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.hero p {
+  margin: 8px 0 0;
+  color: #aeb6c2;
+  line-height: 1.5;
+}
+
+.card {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid #292e38;
+  border-radius: 16px;
+  background: #171a20;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.help {
+  margin: -4px 0 14px;
+  color: #9da6b3;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  border: 1px dashed #596270;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.upload input { display: none; }
+
+#videoPreview {
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 12px;
+  background: #000;
+}
+
+.x-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.x-button {
+  min-height: 44px;
+  border: 1px solid #3a414d;
+  border-radius: 10px;
+  background: #20252d;
+  color: #fff;
+  font-weight: 700;
+}
+
+.x-button.selected {
+  outline: 2px solid #fff;
+  background: #343b47;
+}
+
+.selected-info {
+  margin-top: 12px;
+  color: #b8c0cb;
+}
+
+.primary {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  color: #101216;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.primary:disabled {
+  opacity: .4;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #2b3039;
+}
+
+#progressBar {
+  width: 0%;
+  height: 100%;
+  background: #fff;
+  transition: width .25s ease;
+}
+
+#progressText {
+  margin-bottom: 0;
+  color: #b8c0cb;
+}
+
+.tip {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #20252d;
+  color: #d8dde5;
+  line-height: 1.5;
+}
+
+.notice {
+  padding: 14px;
+  border-radius: 10px;
+  background: #20252d;
+  color: #cbd2dc;
+  line-height: 1.6;
+}

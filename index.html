@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MotionAngle</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="logo">MotionAngle</div>
+      <p>AI 기반 운동 동작 및 관절 가동범위 분석</p>
+    </header>
+
+    <section class="card">
+      <h2>1. 운동 영상 선택</h2>
+      <label class="upload">
+        <input id="videoInput" type="file" accept="video/*">
+        <span id="fileName">영상 선택</span>
+      </label>
+      <video id="videoPreview" controls playsinline hidden></video>
+    </section>
+
+    <section class="card">
+      <h2>2. 분석 간격 X</h2>
+      <p class="help">낮은 X는 더 세밀한 분석, 높은 X는 더 빠른 분석에 유리합니다.</p>
+      <div class="x-grid" id="xGrid"></div>
+      <div class="selected-info">현재 선택: <strong id="xValue">5</strong></div>
+    </section>
+
+    <button id="analyzeButton" class="primary" disabled>분석 시작</button>
+
+    <section id="progressCard" class="card" hidden>
+      <h2>분석 상태</h2>
+      <div class="progress-track"><div id="progressBar"></div></div>
+      <p id="progressText">준비 중...</p>
+      <div id="tip" class="tip"></div>
+    </section>
+
+    <section id="resultCard" class="card" hidden>
+      <h2>분석 결과</h2>
+      <p id="resultMessage"></p>
+      <div class="notice">
+        현재 버전은 업로드 및 배포 테스트 단계입니다.<br>
+        다음 단계에서 실제 AI Pose Estimation, 관절각도, 최대/최소각도,
+        interpolation, smoothing을 연결합니다.
+      </div>
+    </section>
+  </main>
+
+  <script src="/script.js"></script>
+</body>
+</html>
